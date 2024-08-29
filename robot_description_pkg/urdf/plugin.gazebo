@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="myrobot">   
+    <gazebo>
+      <plugin name='skid_steer_drive' filename='libgazebo_ros_diff_drive.so'>
+        <!-- <ros>
+          <remapping>odom:=odom/unfiltered</remapping>
+        </ros> -->
+
+        <num_wheel_pairs>2</num_wheel_pairs>
+
+        <left_joint>joint_front_left_wheel</left_joint>
+        <right_joint>joint_front_right_wheel</right_joint>
+        
+        <left_joint>joint_back_left_wheel</left_joint>
+        <right_joint>joint_back_right_wheel</right_joint>
+
+        <wheel_separation>0.5</wheel_separation>
+        <wheel_separation>0.5</wheel_separation>
+        <wheel_diameter>0.2</wheel_diameter>
+        <wheel_diameter>0.2</wheel_diameter>
+
+        <updateRate>100</updateRate>
+        <max_wheel_acceleration>1.0</max_wheel_acceleration>
+        <max_wheel_torque>20</max_wheel_torque>
+
+        <robot_base_frame>base_link</robot_base_frame>
+        <publish_odom>true</publish_odom>
+        <publish_odom_tf>true</publish_odom_tf>
+        <publish_wheel_tf>true</publish_wheel_tf>
+        <odometry_frame>odom</odometry_frame>
+        <odometry_source>world</odometry_source>
+      </plugin>
+    </gazebo>
+
+    <!-- camera -->
+    <gazebo reference="camera">
+        <sensor type="camera" name="camera1">
+        <update_rate>30.0</update_rate>
+        <camera name="head">
+            <horizontal_fov>1.570796</horizontal_fov>
+            <image>
+            <width>800</width>
+            <height>800</height>
+            <format>R8G8B8</format>
+            </image>
+            <clip>
+            <near>0.02</near>
+            <far>300</far>
+            </clip>
+            <noise>
+            <type>gaussian</type>
+            <!-- Noise is sampled independently per pixel on each frame.
+                That pixel's noise value is added to each of its color
+                channels, which at that point lie in the range [0,1]. -->
+            <mean>0.0</mean>
+            <stddev>0.007</stddev>
+            </noise>
+        </camera>
+        <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+            <alwaysOn>true</alwaysOn>
+            <updateRate>0.0</updateRate>
+            <cameraName>rrbot/camera1</cameraName>
+            <imageTopicName>image_raw</imageTopicName>
+            <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+            <frameName>camera</frameName>
+            <hackBaseline>0.07</hackBaseline>
+            <distortionK1>0.0</distortionK1>
+            <distortionK2>0.0</distortionK2>
+            <distortionK3>0.0</distortionK3>
+            <distortionT1>0.0</distortionT1>
+            <distortionT2>0.0</distortionT2>
+        </plugin>
+        </sensor>
+    </gazebo>
+
+
+     <!-- LIDER -->
+    <gazebo reference="lidar">
+        <sensor type="ray" name="head_hokuyo_sensor">
+            <pose>0 0 0 0 0 0</pose>
+            <visualize>true</visualize>
+            <update_rate>40</update_rate>
+            <ray>
+                <scan>
+                    <horizontal>
+                        <samples>780</samples>
+                        <resolution>1</resolution>
+                        <min_angle>-1.570796327</min_angle> 
+                        <max_angle>1.570796327</max_angle>
+                    </horizontal>
+                </scan>
+                <range>
+                    <min>0.10</min>
+                    <max>30.0</max>
+                    <resolution>0.01</resolution>
+                </range>
+                <noise>
+                    <type>gaussian</type>
+                    <!-- Noise parameters based on published spec for Hokuyo laser
+                        achieving "+-30mm" accuracy at range < 10m.  A mean of 0.0m and
+                        stddev of 0.01m will put 99.7% of samples within 0.03m of the true
+                        reading. -->
+                    <mean>0.0</mean>
+                    <stddev>0.01</stddev>
+                </noise>
+            </ray>
+            <plugin name="lidar_controller" filename="libgazebo_ros_ray_sensor.so">
+                <ros>
+                    <remapping>~/out:=scan</remapping>                                                                                                                           
+                </ros>
+                <output_type>sensor_msgs/LaserScan</output_type>
+                <topicName>/scan</topicName>
+                <frameName>lidar</frameName>
+            </plugin>
+        </sensor>
+    </gazebo>
+
+</robot>

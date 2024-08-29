@@ -1,86 +1,73 @@
 #!/usr/bin/env python3
+
+
 import os
 
-from ament_index_python import get_package_share_directory
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
-from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackageShare
-import xacro
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
+    launch_file_dir = os.path.join(get_package_share_directory('robot_description_pkg'), 'launch')
+    pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
 
-    # Get dir names
-    pkg_share = get_package_share_directory('robot_description_pkg')
-    
+    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    x_pose = LaunchConfiguration('x_pose', default='-2.0')
+    y_pose = LaunchConfiguration('y_pose', default='-0.5')
 
-    # Get rviz config
-    rviz_config = PathJoinSubstitution([
-        FindPackageShare('robot_description_pkg'), 'rviz/view_robot.rviz'
-    ])
+    world = os.path.join(
+        get_package_share_directory('robot_description_pkg'),
+        'world',
+        'wall.world'
+    )
 
-    # Add launch description variables
-    namespace = LaunchConfiguration('namespace')
-    spawn_robot = LaunchConfiguration('spawn_robot')
-    # robot_description = LaunchConfiguration('robot_description')
+    gzserver_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_gazebo_ros, 'launch', 'gzserver.launch.py')
+        ),
+        launch_arguments={'world': world}.items()
+    )
 
-    # Add launch arguments
-    namespace_arg = DeclareLaunchArgument(
-                        name='namespace',
-                        default_value='',
-                        description='Node namespace')
+    gzclient_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
+        )
+    )
 
-    spawn_robot_arg = DeclareLaunchArgument(
-                    name='spawn_robot',
-                    default_value='true',
-                    description='Flag to spawn the robot or not')
-
-    # Compute robot_description string
-    xacro_file = os.path.join(pkg_share, 'urdf/robot.xacro')
-    robot_description = xacro.process(xacro_file)
-
+    # robot_state_publisher_cmd = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(
+    #         os.path.join(launch_file_dir, 'robot_state_publisher.launch.py')
+    #     ),
+    #     launch_arguments={'use_sim_time': use_sim_time}.items()
+    # )
     # Define parameters
-    common_params = {
-        'robot_description': robot_description,
-    }
 
-    # Add nodes
-    robot_state_publisher = Node(
-            package='robot_state_publisher',
-            executable='robot_state_publisher',
-            name='robot_state_publisher',
-            output='screen',
-            namespace=namespace,
-            parameters=[common_params])
+    # robot_state_publisher = Node(
+    #     package='robot_state_publisher',
+    #     executable='robot_state_publisher',
+    #     name='robot_state_publisher',
+    #     output='screen',
+    #     parameters=[common_params]
+    # )
+    spawn_turtlebot_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(launch_file_dir, 'tut.launch.py')
+        ),
+        launch_arguments={
+            'x_pose': x_pose,
+            'y_pose': y_pose
+        }.items()
+    )
 
-    joint_state_publisher = Node(
-            package='joint_state_publisher',
-            executable='joint_state_publisher',
-            name='joint_state_publisher',
-            output='screen',
-            namespace=namespace)
-        #     arguments=[robot_description])
+    ld = LaunchDescription()
 
-    rviz_node = Node(
-            condition=IfCondition(spawn_robot),
-            package='rviz2',
-            executable='rviz2',
-            name='rviz',
-            output='screen',
-            namespace=namespace,
-            arguments=['-d', rviz_config])
+    # Add the commands to the launch description
+    ld.add_action(gzserver_cmd)
+    ld.add_action(gzclient_cmd)
+    #ld.add_action(robot_state_publisher_cmd)
+    ld.add_action(spawn_turtlebot_cmd)
 
-    # Launch description
-    launch_description = LaunchDescription()
-
-    # Add launch actions to the launch description
-    launch_description.add_action(namespace_arg)
-    launch_description.add_action(spawn_robot_arg)
-    launch_description.add_action(joint_state_publisher)
-    launch_description.add_action(robot_state_publisher)
-    launch_description.add_action(rviz_node)
-
-    return launch_description
+    return ld
