@@ -3,53 +3,55 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess
+from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch.conditions import IfCondition
-from launch_ros.substitutions import FindPackageShare
-from launch_ros.actions import Node
+
 
 def generate_launch_description():
 
-    urdf_path = os.path.join(
-        get_package_share_directory('robot_description_pkg'),
-        'models', 'model.sdf'   
-    )
+    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
 
-    # Get RViz config file
+    pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
+
+    model_path = os.path.join(
+        get_package_share_directory('robot_description_pkg'),
+        'models',
+        'model.sdf'
+    )
     rviz_config = os.path.join(
         get_package_share_directory('robot_description_pkg'),
         'rviz',
         'view_robot.rviz'
     )
-
     world = os.path.join(
         get_package_share_directory('robot_description_pkg'),
         'world',
         'wall.world'
     )
+    urdf_path = os.path.join(
+        get_package_share_directory('robot_description_pkg'),
+        'urdf',
+        'robot.urdf'    
+    )
 
-    # Define LaunchConfiguration for spawning the robot
     spawn_robot = LaunchConfiguration('spawn_robot', default='true')
 
     with open(urdf_path, 'r') as infp:
         robot_desc = infp.read()
 
-    # Define parameters
-    common_params = {
-        'robot_description': robot_desc,
-    }
-
-    # Add nodes
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         name='robot_state_publisher',
         output='screen',
-        parameters=[common_params]
+        parameters=[{
+                'use_sim_time': use_sim_time,
+                'robot_description': robot_desc
+            }],
     )
 
     joint_state_publisher = Node(
@@ -68,53 +70,58 @@ def generate_launch_description():
         arguments=['-d', rviz_config]
     )
 
-    myrobot = 'robot_name' 
-    # Launch configuration variables specific to simulation
+    myrobot = 'my_robot'
     x_pose = LaunchConfiguration('x_pose', default='0.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
 
-    # Declare the launch arguments
     declare_x_position_cmd = DeclareLaunchArgument(
         'x_pose', default_value='0.0',
-        description='Specify the x-coordinate for the robot spawn position'
+        description='Specify x position of the robot'
     )
 
     declare_y_position_cmd = DeclareLaunchArgument(
         'y_pose', default_value='0.0',
-        description='Specify the y-coordinate for the robot spawn position'
+        description='Specify y position of the robot'
     )
 
-    # Launch Ignition Gazebo (gz sim) with the specified world file
-    gz_sim_cmd = ExecuteProcess(
-        cmd=['gz', 'sim', world],
-        output='screen'
-    )
-
-    # Use Ignition Gazebo to spawn the robot into the simulation
-    spawn_robot_cmd = ExecuteProcess(
-        cmd=[
-            'gz', 'sim', '-v', '4', world,
-            '--spawn-file', urdf_path,
-            '--name', myrobot,
+    start_gazebo_ros_spawner_cmd = Node(
+        package='gazebo_ros',
+        executable='spawn_entity.py',
+        arguments=[
+            '-entity', myrobot,
+            '-file', model_path,
             '-x', x_pose,
             '-y', y_pose,
             '-z', '0.01'
         ],
-        output='screen'
+        output='screen',
+    )
+    
+    print("STARTING ALL NODES")
+
+    gzserver_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_gazebo_ros, 'launch', 'gzserver.launch.py')
+        ),
+        launch_arguments={'world': world}.items()
     )
 
-    # Create launch description
+    gzclient_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
+        )
+    )
+
     ld = LaunchDescription()
 
-    # Declare the launch options
     ld.add_action(declare_x_position_cmd)
     ld.add_action(declare_y_position_cmd)
 
-    # Add the nodes and processes to launch description
     ld.add_action(robot_state_publisher)
     ld.add_action(joint_state_publisher)
     ld.add_action(rviz_node)
-    ld.add_action(gz_sim_cmd)
-    ld.add_action(spawn_robot_cmd)
+    ld.add_action(start_gazebo_ros_spawner_cmd)
+    ld.add_action(gzserver_cmd)
+    ld.add_action(gzclient_cmd)
 
     return ld

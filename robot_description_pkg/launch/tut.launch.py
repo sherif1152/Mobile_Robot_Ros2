@@ -11,7 +11,6 @@ from launch_ros.actions import Node
 from launch.conditions import IfCondition
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
-import xacro
 
 def generate_launch_description():
 
@@ -20,7 +19,7 @@ def generate_launch_description():
     urdf_path = os.path.join(
         get_package_share_directory('robot_description_pkg'),
         'urdf',
-        'robot.xacro'    
+        'robot.urdf'    
     )
     # Get rviz config
     rviz_config = os.path.join(
@@ -38,12 +37,14 @@ def generate_launch_description():
     # Define LaunchConfiguration for spawning the robot
     spawn_robot = LaunchConfiguration('spawn_robot', default='true')
 
-    robot_description_config = xacro.process_file(urdf_path)
-    robot_description = robot_description_config.toxml()
+    # robot_description_config = xacro.process_file(urdf_path)
+    # robot_description = robot_description_config.toxml()
+    with open(urdf_path, 'r') as infp:
+        robot_desc = infp.read()
 
     # Define parameters
     common_params = {
-        'robot_description': robot_description,
+        'robot_description': robot_desc,
     }
 
     # Add nodes
@@ -111,18 +112,6 @@ def generate_launch_description():
         )
     )
 
-    gzserver_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_gazebo_ros, 'launch', 'gzserver.launch.py')
-        ),
-        launch_arguments={'world': world}.items()
-    )
-
-    gzclient_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
-        )
-    )
 
     ld = LaunchDescription()
 

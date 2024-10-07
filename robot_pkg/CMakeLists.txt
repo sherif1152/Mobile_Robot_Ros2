@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(robot_description_pkg)
+project(robot_pkg)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -20,9 +20,9 @@ find_package(ignition-transport11 REQUIRED)
 install(DIRECTORY 
   launch 
   urdf
-  rviz
   world
   models
+  config
   DESTINATION share/${PROJECT_NAME}
   # PATTERN "view_robot.launch.py" EXCLUDE
 )

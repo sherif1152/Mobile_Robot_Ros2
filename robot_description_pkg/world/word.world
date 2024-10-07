@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <sdf version='1.7'>
   <world name='default'>
     <light name='sun' type='directional'>
@@ -88,10 +89,10 @@
       <heading_deg>0</heading_deg>
     </spherical_coordinates>
     <state world_name='default'>
-      <sim_time>98 932000000</sim_time>
-      <real_time>46 861542800</real_time>
-      <wall_time>1722289202 577870994</wall_time>
-      <iterations>46752</iterations>
+      <sim_time>52 180000000</sim_time>
+      <real_time>52 669141505</real_time>
+      <wall_time>1680799989 335491839</wall_time>
+      <iterations>52180</iterations>
       <model name='ground_plane'>
         <pose>0 0 0 0 -0 0</pose>
         <scale>1 1 1</scale>
@@ -103,7 +104,7 @@
         </link>
       </model>
       <model name='world'>
-        <pose>0.13448 0.16052 0 0 -0 0</pose>
+        <pose>0.134479 0.160516 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='Wall_10'>
           <pose>9.53459 4.91091 0 0 0 -1.5708</pose>
@@ -211,7 +212,7 @@
           <pose>5.63038 3.85049 0 0 -0 0</pose>
           <scale>1 1 1</scale>
           <link name='link'>
-            <pose>5.6304 3.85049 0.216227 0 1.57079 0</pose>
+            <pose>5.63038 3.85049 0.21682 0 1.5707 0</pose>
             <velocity>0 0 0 0 -0 0</velocity>
             <acceleration>0 0 0 0 -0 0</acceleration>
             <wrench>0 0 0 0 -0 0</wrench>
@@ -3233,13 +3234,10 @@
     </model>
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose>11.3924 18.0982 35.7746 0 1.08357 -2.34122</pose>
+        <pose>12.5513 13.4102 38.8605 0 1.08357 -2.34122</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
     </gui>
-    <audio>
-      <device>default</device>
-    </audio>
   </world>
 </sdf>

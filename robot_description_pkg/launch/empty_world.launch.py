@@ -4,46 +4,32 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, ExecuteProcess
-from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch.conditions import IfCondition
-from launch_ros.substitutions import FindPackageShare
-from launch_ros.actions import Node
 
 def generate_launch_description():
 
-    urdf_path = os.path.join(
+    # Path to SDF file (since you're using Ignition Gazebo)
+    sdf_path = os.path.join(
         get_package_share_directory('robot_description_pkg'),
-        'models', 'model.sdf'   
+        'models', 'model.sdf' 
     )
 
-    # Get RViz config file
+    # Path to RViz config file
     rviz_config = os.path.join(
         get_package_share_directory('robot_description_pkg'),
         'rviz',
         'view_robot.rviz'
     )
 
-    world = os.path.join(
-        get_package_share_directory('robot_description_pkg'),
-        'world',
-        'wall.world'
-    )
-
-    # Define LaunchConfiguration for spawning the robot
+    # Launch configuration for spawning the robot
     spawn_robot = LaunchConfiguration('spawn_robot', default='true')
 
-    with open(urdf_path, 'r') as infp:
-        robot_desc = infp.read()
+    # Define parameters (SDF is not used for robot_description, so we skip that)
+    common_params = {}
 
-    # Define parameters
-    common_params = {
-        'robot_description': robot_desc,
-    }
-
-    # Add nodes
+    # Node: Robot State Publisher
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -52,6 +38,7 @@ def generate_launch_description():
         parameters=[common_params]
     )
 
+    # Node: Joint State Publisher
     joint_state_publisher = Node(
         package='joint_state_publisher',
         executable='joint_state_publisher',
@@ -59,6 +46,7 @@ def generate_launch_description():
         output='screen'
     )
 
+    # Node: RViz
     rviz_node = Node(
         condition=IfCondition(spawn_robot),
         package='rviz2',
@@ -68,12 +56,12 @@ def generate_launch_description():
         arguments=['-d', rviz_config]
     )
 
-    myrobot = 'robot_name' 
-    # Launch configuration variables specific to simulation
+    # Set robot name and pose launch configurations
+    myrobot = 'robot_name'
     x_pose = LaunchConfiguration('x_pose', default='0.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
 
-    # Declare the launch arguments
+    # Declare launch arguments for robot pose
     declare_x_position_cmd = DeclareLaunchArgument(
         'x_pose', default_value='0.0',
         description='Specify the x-coordinate for the robot spawn position'
@@ -84,17 +72,16 @@ def generate_launch_description():
         description='Specify the y-coordinate for the robot spawn position'
     )
 
-    # Launch Ignition Gazebo (gz sim) with the specified world file
+    # Command to launch Ignition Gazebo (gz sim)
     gz_sim_cmd = ExecuteProcess(
-        cmd=['gz', 'sim', world],
+        cmd=['gz', 'sim'],
         output='screen'
     )
 
-    # Use Ignition Gazebo to spawn the robot into the simulation
+    # Command to spawn the robot in Ignition Gazebo
     spawn_robot_cmd = ExecuteProcess(
         cmd=[
-            'gz', 'sim', '-v', '4', world,
-            '--spawn-file', urdf_path,
+            'gz', 'sim', '--spawn-file', sdf_path,
             '--name', myrobot,
             '-x', x_pose,
             '-y', y_pose,
@@ -106,11 +93,11 @@ def generate_launch_description():
     # Create launch description
     ld = LaunchDescription()
 
-    # Declare the launch options
+    # Declare launch arguments
     ld.add_action(declare_x_position_cmd)
     ld.add_action(declare_y_position_cmd)
 
-    # Add the nodes and processes to launch description
+    # Add nodes and commands to the launch description
     ld.add_action(robot_state_publisher)
     ld.add_action(joint_state_publisher)
     ld.add_action(rviz_node)

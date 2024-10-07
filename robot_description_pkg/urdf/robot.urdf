@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="myrobot"> 
 
-  <xacro:include filename="$(find robot_description_pkg)/urdf/material.xacro"/>
-  <!-- <xacro:include filename="$(find robot_description_pkg)/urdf/plugin.gazebo"/> -->
+ <!-- <xacro:include filename="$(find robot_description_pkg)/urdf/material.xacro"/>
+   <xacro:include filename="$(find robot_description_pkg)/urdf/plugin.gazebo"/> -->
 
 <link name="base_link"/>
 
@@ -209,11 +209,9 @@
     <child link="lidar"/>
    </joint>
 
-  <gazebo>
+  <!-- <gazebo>
       <plugin name='skid_steer_drive' filename='libgazebo_ros_diff_drive.so'>
-        <!-- <ros>
-          <remapping>odom:=odom/unfiltered</remapping>
-        </ros> -->
+        
 
         <num_wheel_pairs>2</num_wheel_pairs>
 
@@ -240,7 +238,7 @@
         <odometry_source>world</odometry_source>
       </plugin>
     </gazebo>
-         <!-- LIDER -->
+         <!- - LIDER -n->
     <gazebo reference="lidar">
         <sensor type="ray" name="head_hokuyo_sensor">
             <pose>0 0 0 0 0 0</pose>
@@ -262,10 +260,10 @@
                 </range>
                 <noise>
                     <type>gaussian</type>
-                    <!-- Noise parameters based on published spec for Hokuyo laser
+                    <!- - Noise parameters based on published spec for Hokuyo laser
                         achieving "+-30mm" accuracy at range < 10m.  A mean of 0.0m and
                         stddev of 0.01m will put 99.7% of samples within 0.03m of the true
-                        reading. -->
+                        reading. - ->
                     <mean>0.0</mean>
                     <stddev>0.01</stddev>
                 </noise>
@@ -279,6 +277,22 @@
                 <frameName>lidar</frameName>
             </plugin>
         </sensor>
-    </gazebo>
+    </gazebo> -->
+      <material  name="white">
+        <color rgba="1 1 1 1"/>
+    </material>
+
+    <material  name="Blue">
+        <color rgba="0.2 0.2 1 1"/>
+    </material>
+
+    <material  name="Red">
+        <color rgba="0.8 0.0 0.0 1.0"/>
+    </material>
+
+    <material  name="Black">
+        <color rgba="0 0 0 1"/>
+    </material>
+
 
 </robot>
