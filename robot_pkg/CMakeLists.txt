@@ -19,7 +19,6 @@ find_package(ignition-transport11 REQUIRED)
 
 install(DIRECTORY 
   launch 
-  urdf
   world
   models
   config
